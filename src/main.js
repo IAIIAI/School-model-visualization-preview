@@ -14,60 +14,107 @@ import { OrbitControls } from 'three-orbitcontrols/OrbitControls.js';
 /* .GLTF model loader import */
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
+/* Load GLTF model function */
+function loadGLTF (url, callback) {
+  const loader = new GLTFLoader();
+  return new Promise(function (resolve, reject) {
+    loader.load(url, (gltf) => {
+      callback(gltf);
+      resolve(gltf.scene);
+    });
+  });
+}
+
 /* Main drawing context representation class */
 class Drawer {
   constructor (canvas) {
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x00ffff);
     const loader = new THREE.CubeTextureLoader();
     const texture = loader.load([
-      './bin/skybox/pos-z.png',
-      './bin/skybox/neg-z.png',
+      './bin/skybox/neg-x.png',
+      './bin/skybox/pos-x.png',
       './bin/skybox/pos-y.png',
       './bin/skybox/neg-y.png',
-      './bin/skybox/pos-x.png',
-      './bin/skybox/neg-x.png'
+      './bin/skybox/pos-z.png',
+      './bin/skybox/neg-z.png'
     ]);
     this.scene.background = texture;
 
-    this.camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 100);
-    this.camera.position.set(0, 8, 26);
+    this.camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 3000);
+    this.camera.position.set(470, 180, 180);
 
     this.controls = new THREE.OrbitControls(this.camera, canvas);
     this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
-    this.controls.minDistance = 3;
-    this.controls.maxDistance = 47;
+    this.controls.minDistance = 200;
+    this.controls.maxDistance = 1500;
 
     this.renderer = new THREE.WebGLRenderer({ canvas: canvas });
-    this.renderer.autoClearColor = false;
     this.renderer.setSize(canvas.width, canvas.height);
-    /*
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMapSoft = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    */
   }
 
   /* Initialize drawing context method */
   init () {
+    // Lights
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.2);
+    this.scene.add(ambLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff);
+    dirLight.castShadow = true;
+    dirLight.shadow.radius = 8;
+    dirLight.shadow.camera.left = -1000;
+    dirLight.shadow.camera.right = 1000;
+    dirLight.shadow.camera.top = 1000;
+    dirLight.shadow.camera.bottom = -1000;
+    dirLight.shadow.camera.far = 2000;
+    dirLight.position.set(1030, 515, 300);
+    this.scene.add(dirLight);
+
     // Plane
     const texture = new THREE.TextureLoader().load('./bin/map.png');
     const plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(10, 10),
-      new THREE.MeshBasicMaterial({ map: texture })
+      new THREE.PlaneGeometry(1030, 1030),
+      new THREE.MeshPhongMaterial({
+        map: texture
+      })
     );
+    plane.receiveShadow = true;
     plane.rotateX(-Math.PI / 2);
     this.scene.add(plane);
 
-    // Test cube sample
-    const test = new THREE.Mesh(
-      new THREE.CubeGeometry(1, 1, 1),
-      new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true
-      })
-    );
-    test.position.set(0, 0.51, 0);
-    this.scene.add(test);
+    // School building
+    let school = new THREE.Object3D();
+    const pr = loadGLTF('./bin/school/low.glb', (gltf) => {
+      const root = gltf.scene;
+      root.children[0].material = new THREE.MeshPhongMaterial({
+        color: 0xcdcdcd
+      });
+      root.children[0].castShadow = true;
+      root.children[0].receiveShadow = true;
+      root.rotateY(-Math.PI / 3);
+      root.position.add(new THREE.Vector3(16, 0, 9));
+      school = root;
+      school.name = 'school';
+      this.scene.add(school);
+    });
+    pr.then((scene) => {
+      return loadGLTF('./bin/school/high.glb', (gltf) => {
+        const root = gltf.scene;
+        root.children[0].material = new THREE.MeshPhongMaterial({
+          color: 0xcdcdcd
+        });
+        root.children[0].castShadow = true;
+        root.children[0].receiveShadow = true;
+        root.rotateY(-Math.PI / 3);
+        root.position.add(new THREE.Vector3(40, 16, 47));
+        school = root;
+        this.scene.remove(this.scene.getObjectByName('school'));
+        this.scene.add(school);
+      });
+    });
   }
 
   /* Interframe response method */
