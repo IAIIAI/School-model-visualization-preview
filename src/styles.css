@@ -4,3 +4,11 @@
   margin-right: auto;
   display: block;
 }
+
+#to-full {
+  position: absolute;
+  left: 980px;
+  top: 700px;
+  color: #ffffff;
+  background-color: #ff0000;
+}

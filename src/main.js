@@ -47,7 +47,9 @@ class Drawer {
     this.controls = new THREE.OrbitControls(this.camera, canvas);
     this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
     this.controls.minDistance = 200;
-    this.controls.maxDistance = 1500;
+    this.controls.maxDistance = 800;
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.1;
 
     this.renderer = new THREE.WebGLRenderer({ canvas: canvas });
     this.renderer.setSize(canvas.width, canvas.height);
@@ -59,7 +61,7 @@ class Drawer {
   /* Initialize drawing context method */
   init () {
     // Lights
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.2);
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.3);
     this.scene.add(ambLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff);
@@ -117,12 +119,9 @@ class Drawer {
     });
   }
 
-  /* Interframe response method */
-  response () {
-  }
-
   /* Render method */
   render () {
+    this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
 }
@@ -134,7 +133,6 @@ let drawer;
 function render () {
   window.requestAnimationFrame(render);
 
-  drawer.response();
   drawer.render();
 }
 
