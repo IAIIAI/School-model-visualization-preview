@@ -5,12 +5,6 @@
   display: block;
 }
 
-#controls {
-  position: absolute;
-  left: 942px;
-  top: 685px;
-}
-
 #button {
   color: #ffffff;
   background-color: #ff0000;

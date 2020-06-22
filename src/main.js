@@ -123,6 +123,11 @@ class Drawer {
     this.renderer.render(this.bgScene, this.camera);
     this.renderer.render(this.scene, this.camera);
   }
+
+  /* Update renderer method */
+  update (canvas) {
+    this.renderer.setSize(canvas.width, canvas.height);
+  }
 }
 
 /* Main program drawing context */
@@ -141,8 +146,36 @@ function threejsStart () {
   drawer = new Drawer(canvas);
 
   drawer.init();
+  resizeAll();
   render();
+}
+
+/* Resize all HTML elements on the page function */
+function resizeAll () {
+  const canvas = document.getElementById('canvas');
+  let canvasRect = canvas.getBoundingClientRect();
+  const side = Math.min(window.innerWidth - canvasRect.left - 21, window.innerHeight - canvasRect.top - 21);
+  canvas.width = side >= 700 ? 700 : side;
+  canvas.height = side >= 700 ? 700 : side;
+  drawer.update(canvas);
+  canvasRect = canvas.getBoundingClientRect();
+
+  const button = document.getElementById('button');
+  button.style.width = `${canvasRect.width / 4}px`;
+  button.style.height = `${canvasRect.height / 25}px`;
+  button.style['font-size'] = `${canvasRect.height / 50}px`;
+  const buttonRect = button.getBoundingClientRect();
+  button.style.position = 'absolute';
+  button.style.left = `${canvasRect.left + canvasRect.width - buttonRect.width}px`;
+  button.style.top = `${canvasRect.top + canvasRect.height - buttonRect.height}px`;
+}
+
+/* Resize function */
+function resize () {
+  resizeAll();
+  resizeAll();
 }
 
 /* Add event handle for dynamically updating objects */
 document.addEventListener('DOMContentLoaded', threejsStart);
+window.onresize = resize;
