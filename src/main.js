@@ -14,16 +14,37 @@ import { OrbitControls } from 'three-orbitcontrols/OrbitControls.js';
 /* .GLTF model loader import */
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-/* Load GLTF model function */
-function loadGLTF (url, callback) {
-  const loader = new GLTFLoader();
-  return new Promise(function (resolve, reject) {
-    loader.load(url, (gltf) => {
-      callback(gltf);
-      resolve(gltf.scene);
-    });
-  });
-}
+/* Loading manager for resources */
+const manager = new THREE.LoadingManager();
+manager.onStart = function () {
+  const barContainer = document.createElement('div');
+  barContainer.style.cssText = `
+    text-align: center;
+    width: 200px;
+    background-color: black;
+    border-radius: 13px;
+    padding: 3px;
+  `;
+  barContainer.id = 'progressContainer';
+  barContainer.innerHTML = '<p style="color: white"> Loading resources... </p>';
+  const barProgress = document.createElement('div');
+  barProgress.style.cssText = `
+    background-color: blue;
+    width: 0%;
+    height: 20px;
+    border-radius: 10px;
+  `;
+  barProgress.id = 'progress';
+  barContainer.appendChild(barProgress);
+  document.getElementById('main').appendChild(barContainer);
+};
+manager.onProgress = function (item, loaded, total) {
+  document.getElementById('progress').style.width = `${loaded / total * 100}%`;
+};
+manager.onLoad = function () {
+  const bar = document.getElementById('progressContainer');
+  bar.parentNode.removeChild(bar);
+};
 
 /* Main drawing context representation class */
 class Drawer {
@@ -31,7 +52,7 @@ class Drawer {
     this.scene = new THREE.Scene();
 
     this.bgScene = new THREE.Scene();
-    const loader = new THREE.TextureLoader();
+    const loader = new THREE.TextureLoader(manager);
     const texture = loader.load('./bin/sky.jpg');
     texture.magFilter = THREE.LinearFilter;
     texture.minFilter = THREE.LinearFilter;
@@ -78,7 +99,7 @@ class Drawer {
     this.scene.add(dirLight);
 
     // Plane
-    const loader = new THREE.TextureLoader();
+    const loader = new THREE.TextureLoader(manager);
     const texture = loader.load('./bin/map.png');
     const alphamap = loader.load('./bin/alphamap.jpg');
     const plane = new THREE.Mesh(
@@ -94,24 +115,34 @@ class Drawer {
 
     // School building
     let school = new THREE.Object3D();
-    const pr = loadGLTF('./bin/school/low.glb', (gltf) => {
-      const root = gltf.scene;
-      root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
-      root.rotateY(-Math.PI / 2);
-      root.position.add(new THREE.Vector3(0, 0, -7));
-      school = root;
-      school.name = 'school';
-      this.scene.add(school);
-    });
-    pr.then((scene) => {
-      return loadGLTF('./bin/school/high.glb', (gltf) => {
+    const pr = new Promise((resolve, reject) => {
+      const gltfLoader = new GLTFLoader(manager);
+      gltfLoader.load('./bin/school/low.glb', (gltf) => {
         const root = gltf.scene;
         root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
         root.rotateY(-Math.PI / 2);
-        root.position.add(new THREE.Vector3(4, 16, 39));
+        root.position.add(new THREE.Vector3(0, 0, -7));
         school = root;
-        this.scene.remove(this.scene.getObjectByName('school'));
+        school.name = 'school';
         this.scene.add(school);
+        resolve(gltf.scene);
+      });
+    });
+    pr.then((scene) => {
+      const gltfLoader = new GLTFLoader(
+
+      );
+      return new Promise((resolve, reject) => {
+        gltfLoader.load('./bin/school/high.glb', (gltf) => {
+          const root = gltf.scene;
+          root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
+          root.rotateY(-Math.PI / 2);
+          root.position.add(new THREE.Vector3(4, 16, 39));
+          school = root;
+          this.scene.remove(this.scene.getObjectByName('school'));
+          this.scene.add(school);
+          resolve(gltf.scene);
+        });
       });
     });
   }
@@ -168,6 +199,14 @@ function resizeAll () {
   button.style.position = 'absolute';
   button.style.left = `${canvasRect.left + canvasRect.width - buttonRect.width}px`;
   button.style.top = `${canvasRect.top + canvasRect.height - buttonRect.height}px`;
+
+  const progressBar = document.getElementById('progressContainer');
+  if (progressBar) {
+    const barRect = progressBar.getBoundingClientRect();
+    progressBar.style.position = 'absolute';
+    progressBar.style.left = `${canvasRect.left + canvasRect.width / 2 - barRect.width / 2}px`;
+    progressBar.style.top = `${canvasRect.top + canvasRect.height / 2 - barRect.height / 2}px`;
+  }
 }
 
 /* Resize function */
