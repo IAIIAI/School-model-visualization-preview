@@ -26,14 +26,14 @@ manager.onStart = function () {
     padding: 3px;
   `;
   barContainer.id = 'progressContainer';
-  barContainer.innerHTML = '<p style="color: white"> Loading resources... </p>';
+  barContainer.innerHTML = '<p style="color: white; margin: none"> Loading resources... </p>';
   const barProgress = document.createElement('div');
   barProgress.style.cssText = `
     background-color: blue;
-    width: 0%;
-    height: 20px;
     border-radius: 10px;
   `;
+  barProgress.style.width = '0%';
+  barProgress.style.height = '25%';
   barProgress.id = 'progress';
   barContainer.appendChild(barProgress);
   document.getElementById('main').appendChild(barContainer);
@@ -202,6 +202,9 @@ function resizeAll () {
 
   const progressBar = document.getElementById('progressContainer');
   if (progressBar) {
+    progressBar.style.width = `${canvasRect.width / 3}px`;
+    progressBar.style.height = `${canvasRect.height / 10}px`;
+    progressBar.style['font-size'] = `${canvasRect.height / 40}px`;
     const barRect = progressBar.getBoundingClientRect();
     progressBar.style.position = 'absolute';
     progressBar.style.left = `${canvasRect.left + canvasRect.width / 2 - barRect.width / 2}px`;
