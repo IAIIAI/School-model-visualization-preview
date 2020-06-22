@@ -1,14 +1,17 @@
-#main-canvas {
+#canvas {
   border: none;
   margin-left: auto;
   margin-right: auto;
   display: block;
 }
 
-#to-full {
+#controls {
   position: absolute;
-  left: 980px;
-  top: 700px;
+  left: 942px;
+  top: 685px;
+}
+
+#button {
   color: #ffffff;
   background-color: #ff0000;
 }

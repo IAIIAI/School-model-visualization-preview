@@ -120,7 +120,7 @@ function render () {
 
 /* Start render function */
 function threejsStart () {
-  const canvas = document.getElementById('main-canvas');
+  const canvas = document.getElementById('canvas');
   drawer = new Drawer(canvas);
 
   drawer.init();
