@@ -146,7 +146,7 @@ function threejsStart () {
   drawer = new Drawer(canvas);
 
   drawer.init();
-  resizeAll();
+  resize();
   render();
 }
 
