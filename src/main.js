@@ -51,11 +51,11 @@ class Drawer {
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.1;
 
-    this.renderer = new THREE.WebGLRenderer({ canvas: canvas });
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      antialias: true
+    });
     this.renderer.setSize(canvas.width, canvas.height);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMapSoft = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   }
 
   /* Initialize drawing context method */
@@ -65,13 +65,6 @@ class Drawer {
     this.scene.add(ambLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff);
-    dirLight.castShadow = true;
-    dirLight.shadow.radius = 8;
-    dirLight.shadow.camera.left = -1000;
-    dirLight.shadow.camera.right = 1000;
-    dirLight.shadow.camera.top = 1000;
-    dirLight.shadow.camera.bottom = -1000;
-    dirLight.shadow.camera.far = 2000;
     dirLight.position.set(1030, 515, 0);
     this.scene.add(dirLight);
 
@@ -79,11 +72,8 @@ class Drawer {
     const texture = new THREE.TextureLoader().load('./bin/map.png');
     const plane = new THREE.Mesh(
       new THREE.PlaneGeometry(1030, 1030),
-      new THREE.MeshPhongMaterial({
-        map: texture
-      })
+      new THREE.MeshPhongMaterial({ map: texture })
     );
-    plane.receiveShadow = true;
     plane.rotateX(-Math.PI / 2);
     this.scene.add(plane);
 
@@ -91,11 +81,7 @@ class Drawer {
     let school = new THREE.Object3D();
     const pr = loadGLTF('./bin/school/low.glb', (gltf) => {
       const root = gltf.scene;
-      root.children[0].material = new THREE.MeshPhongMaterial({
-        color: 0xcdcdcd
-      });
-      root.children[0].castShadow = true;
-      root.children[0].receiveShadow = true;
+      root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
       root.rotateY(-Math.PI / 3);
       root.position.add(new THREE.Vector3(16, 0, 9));
       school = root;
@@ -105,11 +91,7 @@ class Drawer {
     pr.then((scene) => {
       return loadGLTF('./bin/school/high.glb', (gltf) => {
         const root = gltf.scene;
-        root.children[0].material = new THREE.MeshPhongMaterial({
-          color: 0xcdcdcd
-        });
-        root.children[0].castShadow = true;
-        root.children[0].receiveShadow = true;
+        root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
         root.rotateY(-Math.PI / 3);
         root.position.add(new THREE.Vector3(40, 16, 47));
         school = root;
