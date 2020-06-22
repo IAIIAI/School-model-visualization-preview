@@ -72,7 +72,7 @@ class Drawer {
     dirLight.shadow.camera.top = 1000;
     dirLight.shadow.camera.bottom = -1000;
     dirLight.shadow.camera.far = 2000;
-    dirLight.position.set(1030, 515, 300);
+    dirLight.position.set(1030, 515, 0);
     this.scene.add(dirLight);
 
     // Plane
