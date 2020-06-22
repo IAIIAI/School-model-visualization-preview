@@ -29,17 +29,25 @@ function loadGLTF (url, callback) {
 class Drawer {
   constructor (canvas) {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x00ffff);
-    const loader = new THREE.CubeTextureLoader();
-    const texture = loader.load([
-      './bin/skybox/neg-x.png',
-      './bin/skybox/pos-x.png',
-      './bin/skybox/pos-y.png',
-      './bin/skybox/neg-y.png',
-      './bin/skybox/pos-z.png',
-      './bin/skybox/neg-z.png'
-    ]);
-    this.scene.background = texture;
+
+    this.bgScene = new THREE.Scene();
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('./bin/sky.jpg');
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearFilter;
+
+    const shader = THREE.ShaderLib.equirect;
+    const material = new THREE.ShaderMaterial({
+      fragmentShader: shader.fragmentShader,
+      vertexShader: shader.vertexShader,
+      uniforms: shader.uniforms,
+      depthWrite: false,
+      side: THREE.BackSide
+    });
+    material.uniforms.tEquirect.value = texture;
+    const plane = new THREE.BoxBufferGeometry(2, 2, 2);
+    this.bgMesh = new THREE.Mesh(plane, material);
+    this.bgScene.add(this.bgMesh);
 
     this.camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 3000);
     this.camera.position.set(470, 180, 180);
@@ -55,6 +63,7 @@ class Drawer {
       canvas: canvas,
       antialias: true
     });
+    this.renderer.autoClearColor = false;
     this.renderer.setSize(canvas.width, canvas.height);
   }
 
@@ -110,6 +119,8 @@ class Drawer {
   /* Render method */
   render () {
     this.controls.update();
+    this.bgMesh.position.copy(this.camera.position);
+    this.renderer.render(this.bgScene, this.camera);
     this.renderer.render(this.scene, this.camera);
   }
 }
