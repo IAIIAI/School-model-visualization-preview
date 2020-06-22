@@ -69,10 +69,16 @@ class Drawer {
     this.scene.add(dirLight);
 
     // Plane
-    const texture = new THREE.TextureLoader().load('./bin/map.png');
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('./bin/map.png');
+    const alphamap = loader.load('./bin/alphamap.jpg');
     const plane = new THREE.Mesh(
       new THREE.PlaneGeometry(1030, 1030),
-      new THREE.MeshPhongMaterial({ map: texture })
+      new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        alphaMap: alphamap
+      })
     );
     plane.rotateX(-Math.PI / 2);
     this.scene.add(plane);
@@ -82,8 +88,8 @@ class Drawer {
     const pr = loadGLTF('./bin/school/low.glb', (gltf) => {
       const root = gltf.scene;
       root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
-      root.rotateY(-Math.PI / 3);
-      root.position.add(new THREE.Vector3(16, 0, 9));
+      root.rotateY(-Math.PI / 2);
+      root.position.add(new THREE.Vector3(0, 0, -7));
       school = root;
       school.name = 'school';
       this.scene.add(school);
@@ -92,8 +98,8 @@ class Drawer {
       return loadGLTF('./bin/school/high.glb', (gltf) => {
         const root = gltf.scene;
         root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
-        root.rotateY(-Math.PI / 3);
-        root.position.add(new THREE.Vector3(40, 16, 47));
+        root.rotateY(-Math.PI / 2);
+        root.position.add(new THREE.Vector3(4, 16, 39));
         school = root;
         this.scene.remove(this.scene.getObjectByName('school'));
         this.scene.add(school);
