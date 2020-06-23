@@ -14,6 +14,54 @@ import { OrbitControls } from 'three-orbitcontrols/OrbitControls.js';
 /* .GLTF model loader import */
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
+/* Import dat.gui library */
+import dat from 'dat.gui';
+
+/* Import basement shaders text */
+import vShader from './base.vert';
+import fShader from './base.frag';
+
+/* Near and far borders for basement transparency */
+const fade = {
+  near: 200,
+  far: 515
+};
+
+/* Building representation class */
+class Building {
+  constructor (x0, y0, x1, y1, h, color = 0xffffff, opacity = 0.5) {
+    this.coords = new THREE.Vector2(x0 + Math.abs(x1 - x0) / 2, y0 + Math.abs(y1 - y0) / 2);
+    this.geom = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
+    this.geom.translate(x0, h / 2 + 1, y0);
+
+    this.color = color;
+    this.opacity = opacity;
+  }
+
+  toMesh () {
+    console.log(this.coords);
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        color: new THREE.Uniform(new THREE.Vector3(
+          ((this.color & 0xff0000) >> 16) / 255,
+          ((this.color & 0x00ff00) >> 8) / 255,
+          (this.color & 0x0000ff) / 255
+        )),
+        fadeNear: { value: fade.near },
+        fadeFar: { value: fade.far },
+        fadeParam: { value: 1.0 },
+        isTex: { value: false }
+      },
+      vertexShader: vShader,
+      fragmentShader: fShader,
+      blending: THREE.NormalBlending,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(this.geom, material);
+  }
+}
+
 /* Loading manager for resources and its functions */
 const manager = new THREE.LoadingManager();
 manager.onStart = function () {
@@ -91,6 +139,8 @@ class Drawer {
     });
     this.renderer.autoClearColor = false;
     this.renderer.setSize(canvas.width, canvas.height);
+
+    this.gui = new dat.GUI();
   }
 
   /* Initialize drawing context method */
@@ -106,13 +156,20 @@ class Drawer {
     // Plane
     const loader = new THREE.TextureLoader(manager);
     const texture = loader.load('./bin/map.png');
-    const alphamap = loader.load('./bin/alphamap.jpg');
     const plane = new THREE.Mesh(
       new THREE.PlaneGeometry(1030, 1030),
-      new THREE.MeshBasicMaterial({
-        map: texture,
-        transparent: true,
-        alphaMap: alphamap
+      new THREE.ShaderMaterial({
+        uniforms: {
+          tex: { value: texture },
+          fadeNear: { value: fade.near },
+          fadeFar: { value: fade.far },
+          fadeParam: { value: 1.0 },
+          isTex: { value: true }
+        },
+        vertexShader: vShader,
+        fragmentShader: fShader,
+        blending: THREE.NormalBlending,
+        transparent: true
       })
     );
     plane.rotateX(-Math.PI / 2);
@@ -148,6 +205,20 @@ class Drawer {
         });
       });
     });
+
+    // Test building
+    const b = new Building(
+      300, 300,
+      400, 400,
+      50,
+      0x00dddd
+    );
+    this.building = b.toMesh();
+    this.scene.add(this.building);
+
+    // dat.GUI fields
+    this.gui.add(fade, 'near', 0, 700).step(10);
+    this.gui.add(fade, 'far', 0, 1000).step(10);
   }
 
   /* Render method */
@@ -156,6 +227,15 @@ class Drawer {
     this.bgMesh.position.copy(this.camera.position);
     this.renderer.render(this.bgScene, this.camera);
     this.renderer.render(this.scene, this.camera);
+
+    this.scene.traverse((child) => {
+      if (child instanceof THREE.Mesh &&
+          child.material.type === 'ShaderMaterial') {
+        child.material.uniforms.fadeNear.value = fade.near;
+        child.material.uniforms.fadeFar.value = fade.far;
+        child.material.needsUpdate = true;
+      }
+    });
   }
 
   /* Update renderer method */
