@@ -32,11 +32,13 @@ manager.onStart = function () {
     background-color: blue;
     border-radius: 10px;
   `;
-  barProgress.style.width = '0%';
+  barProgress.style.width = '10%';
   barProgress.style.height = '25%';
   barProgress.id = 'progress';
   barContainer.appendChild(barProgress);
   document.getElementById('main').appendChild(barContainer);
+
+  document.getElementById('canvas').style.cursor = 'wait';
 };
 manager.onProgress = function (item, loaded, total) {
   document.getElementById('progress').style.width = `${loaded / total * 100}%`;
@@ -44,6 +46,8 @@ manager.onProgress = function (item, loaded, total) {
 manager.onLoad = function () {
   const bar = document.getElementById('progressContainer');
   bar.parentNode.removeChild(bar);
+
+  document.getElementById('canvas').style.cursor = 'grab';
 };
 
 /* Main drawing context representation class */
@@ -129,9 +133,7 @@ class Drawer {
       });
     });
     pr.then((scene) => {
-      const gltfLoader = new GLTFLoader(
-
-      );
+      const gltfLoader = new GLTFLoader(manager);
       return new Promise((resolve, reject) => {
         gltfLoader.load('./bin/school/high.glb', (gltf) => {
           const root = gltf.scene;
@@ -208,7 +210,7 @@ function resizeAll () {
     const barRect = progressBar.getBoundingClientRect();
     progressBar.style.position = 'absolute';
     progressBar.style.left = `${canvasRect.left + canvasRect.width / 2 - barRect.width / 2}px`;
-    progressBar.style.top = `${canvasRect.top + canvasRect.height / 2 - barRect.height / 2}px`;
+    progressBar.style.top = `${canvasRect.top + canvasRect.height * 2 / 3 - barRect.height / 2}px`;
   }
 }
 
