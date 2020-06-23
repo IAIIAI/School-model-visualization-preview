@@ -14,7 +14,7 @@ import { OrbitControls } from 'three-orbitcontrols/OrbitControls.js';
 /* .GLTF model loader import */
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-/* Loading manager for resources */
+/* Loading manager for resources and its functions */
 const manager = new THREE.LoadingManager();
 manager.onStart = function () {
   const barContainer = document.createElement('div');
@@ -78,6 +78,7 @@ class Drawer {
     this.camera.position.set(470, 180, 180);
 
     this.controls = new THREE.OrbitControls(this.camera, canvas);
+    this.controls.enableKeys = false;
     this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
     this.controls.minDistance = 200;
     this.controls.maxDistance = 800;
