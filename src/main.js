@@ -21,6 +21,9 @@ import dat from 'dat.gui';
 import vShader from './base.vert';
 import fShader from './base.frag';
 
+/* Buildings metadata file import */
+import buildings from '../bin/buildings.json';
+
 /* Buildings global parameters */
 const buildParams = {
   near: 200,
@@ -39,6 +42,19 @@ class Building {
 
     this.wire = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
     this.wire.translate(x0, h / 2 + 1, y0);
+  }
+
+  /* Extract buildings from string method */
+  static extract (string) {
+    try {
+      const data = Object.values(string);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = new Building(data[i].x0, data[i].y0, data[i].x1, data[i].y1, data[i].height);
+      }
+      return data;
+    } catch (e) {
+      throw new Error(`Oops, incorrect JSON: ${e.message}`);
+    }
   }
 
   /* Transfrom to group method */
@@ -235,14 +251,12 @@ class Drawer {
       });
     });
 
-    // Test building
-    const b = new Building(
-      300, 300,
-      400, 400,
-      50
-    );
-    this.building = b.toGroup();
-    this.scene.add(this.building);
+    // Super buildings
+    this.buildings = Building.extract(buildings);
+    for (let i = 0; i < this.buildings.length; i++) {
+      this.buildings[i] = this.buildings[i].toGroup();
+      this.scene.add(this.buildings[i]);
+    }
 
     // dat.GUI fields
     this.gui.add(buildParams, 'near', 0, 700).step(10);
