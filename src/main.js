@@ -21,44 +21,72 @@ import dat from 'dat.gui';
 import vShader from './base.vert';
 import fShader from './base.frag';
 
-/* Near and far borders for basement transparency */
-const fade = {
+/* Buildings global parameters */
+const buildParams = {
   near: 200,
-  far: 515
+  far: 515,
+  pow: 1,
+  color: 0x00dddd,
+  wireColor: 0x003333,
+  opacity: 0.5
 };
 
 /* Building representation class */
 class Building {
-  constructor (x0, y0, x1, y1, h, color = 0xffffff, opacity = 0.5) {
-    this.coords = new THREE.Vector2(x0 + Math.abs(x1 - x0) / 2, y0 + Math.abs(y1 - y0) / 2);
+  constructor (x0, y0, x1, y1, h) {
     this.geom = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
     this.geom.translate(x0, h / 2 + 1, y0);
 
-    this.color = color;
-    this.opacity = opacity;
+    this.wire = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
+    this.wire.translate(x0, h / 2 + 1, y0);
   }
 
-  toMesh () {
-    console.log(this.coords);
+  /* Transfrom to group method */
+  toGroup () {
     const material = new THREE.ShaderMaterial({
       uniforms: {
         color: new THREE.Uniform(new THREE.Vector3(
-          ((this.color & 0xff0000) >> 16) / 255,
-          ((this.color & 0x00ff00) >> 8) / 255,
-          (this.color & 0x0000ff) / 255
+          ((buildParams.color & 0xff0000) >> 16) / 255,
+          ((buildParams.color & 0x00ff00) >> 8) / 255,
+          (buildParams.color & 0x0000ff) / 255
         )),
-        fadeNear: { value: fade.near },
-        fadeFar: { value: fade.far },
-        fadeParam: { value: 1.0 },
+        opacity: { value: buildParams.opacity },
+        fadeNear: { value: buildParams.near },
+        fadeFar: { value: buildParams.far },
+        fadeParam: { value: buildParams.pow },
+        isTex: { value: false }
+      },
+      vertexShader: vShader,
+      fragmentShader: fShader,
+      blending: THREE.NormalBlending,
+      transparent: true
+    });
+    const wireMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        color: new THREE.Uniform(new THREE.Vector3(
+          ((buildParams.wireColor & 0xff0000) >> 16) / 255,
+          ((buildParams.wireColor & 0x00ff00) >> 8) / 255,
+          (buildParams.wireColor & 0x0000ff) / 255
+        )),
+        opacity: { value: buildParams.opacity },
+        fadeNear: { value: buildParams.near },
+        fadeFar: { value: buildParams.far },
+        fadeParam: { value: buildParams.pow },
         isTex: { value: false }
       },
       vertexShader: vShader,
       fragmentShader: fShader,
       blending: THREE.NormalBlending,
       transparent: true,
-      side: THREE.DoubleSide
+      wireframe: true
     });
-    return new THREE.Mesh(this.geom, material);
+
+    const group = new THREE.Group();
+    group.add(new THREE.Mesh(this.geom, material));
+    const wire = new THREE.Mesh(this.wire, wireMaterial);
+    wire.name = 'wire';
+    group.add(wire);
+    return group;
   }
 }
 
@@ -160,10 +188,11 @@ class Drawer {
       new THREE.PlaneGeometry(1030, 1030),
       new THREE.ShaderMaterial({
         uniforms: {
+          opacity: { value: 1.0 },
           tex: { value: texture },
-          fadeNear: { value: fade.near },
-          fadeFar: { value: fade.far },
-          fadeParam: { value: 1.0 },
+          fadeNear: { value: buildParams.near },
+          fadeFar: { value: buildParams.far },
+          fadeParam: { value: buildParams.pow },
           isTex: { value: true }
         },
         vertexShader: vShader,
@@ -210,32 +239,52 @@ class Drawer {
     const b = new Building(
       300, 300,
       400, 400,
-      50,
-      0x00dddd
+      50
     );
-    this.building = b.toMesh();
+    this.building = b.toGroup();
     this.scene.add(this.building);
 
     // dat.GUI fields
-    this.gui.add(fade, 'near', 0, 700).step(10);
-    this.gui.add(fade, 'far', 0, 1000).step(10);
+    this.gui.add(buildParams, 'near', 0, 700).step(10);
+    this.gui.add(buildParams, 'far', 0, 1000).step(10);
+    this.gui.add(buildParams, 'pow', 0, 5).step(0.1);
+    this.gui.addColor(buildParams, 'color');
+    this.gui.addColor(buildParams, 'wireColor');
+    this.gui.add(buildParams, 'opacity', 0, 1).step(0.01);
   }
 
   /* Render method */
   render () {
-    this.controls.update();
-    this.bgMesh.position.copy(this.camera.position);
-    this.renderer.render(this.bgScene, this.camera);
-    this.renderer.render(this.scene, this.camera);
-
     this.scene.traverse((child) => {
       if (child instanceof THREE.Mesh &&
           child.material.type === 'ShaderMaterial') {
-        child.material.uniforms.fadeNear.value = fade.near;
-        child.material.uniforms.fadeFar.value = fade.far;
+        child.material.uniforms.fadeNear.value = buildParams.near;
+        child.material.uniforms.fadeFar.value = buildParams.far;
+        child.material.uniforms.fadeParam.value = buildParams.pow;
+
+        if (child.name !== 'wire') {
+          child.material.uniforms.color = new THREE.Uniform(new THREE.Vector3(
+            ((buildParams.color & 0xff0000) >> 16) / 255,
+            ((buildParams.color & 0x00ff00) >> 8) / 255,
+            (buildParams.color & 0x0000ff) / 255
+          ));
+        } else {
+          child.material.uniforms.color = new THREE.Uniform(new THREE.Vector3(
+            ((buildParams.wireColor & 0xff0000) >> 16) / 255,
+            ((buildParams.wireColor & 0x00ff00) >> 8) / 255,
+            (buildParams.wireColor & 0x0000ff) / 255
+          ));
+        }
+        child.material.uniforms.opacity.value = buildParams.opacity;
         child.material.needsUpdate = true;
       }
     });
+
+    this.controls.update();
+    this.bgMesh.position.copy(this.camera.position);
+
+    this.renderer.render(this.bgScene, this.camera);
+    this.renderer.render(this.scene, this.camera);
   }
 
   /* Update renderer method */
