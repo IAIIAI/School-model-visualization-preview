@@ -173,7 +173,7 @@ class Drawer {
     this.controls.enableKeys = false;
     this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
     this.controls.minDistance = 200;
-    /// this.controls.maxDistance = 800;
+    this.controls.maxDistance = 800;
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.1;
 
@@ -182,6 +182,7 @@ class Drawer {
       antialias: true
     });
     this.renderer.autoClearColor = false;
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.renderer.setSize(canvas.width, canvas.height);
 
     this.gui = new dat.GUI();
@@ -189,16 +190,9 @@ class Drawer {
 
   /* Initialize drawing context method */
   init () {
-    // Axes (debug)
-    this.scene.add(new THREE.AxesHelper(500, 500, 500));
-
-    // Lights
-    const ambLight = new THREE.AmbientLight(0xffffff, 0.3);
+    // Light
+    const ambLight = new THREE.AmbientLight(0xffffff, 1);
     this.scene.add(ambLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff);
-    dirLight.position.set(1030, 515, 0);
-    this.scene.add(dirLight);
 
     // Plane
     const loader = new THREE.TextureLoader(manager);
@@ -229,7 +223,7 @@ class Drawer {
       const gltfLoader = new GLTFLoader(manager);
       gltfLoader.load('./bin/school/low.glb', (gltf) => {
         const root = gltf.scene;
-        root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
+        root.children[0].material = new THREE.MeshBasicMaterial();
         root.rotateY(-Math.PI / 2);
         root.position.add(new THREE.Vector3(1, 0, -7));
         root.scale.set(1.07, 1.07, 1.07);
@@ -244,9 +238,9 @@ class Drawer {
       return new Promise((resolve, reject) => {
         gltfLoader.load('./bin/school/high.glb', (gltf) => {
           const root = gltf.scene;
-          root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
+          root.children[0].material = new THREE.MeshBasicMaterial();
           root.rotateY(-Math.PI / 2);
-          root.position.add(new THREE.Vector3(-1, 15, 39));
+          root.position.add(new THREE.Vector3(-45, 1, -14));
           root.scale.set(1.05, 1.05, 1.05);
           school = root;
           this.scene.remove(this.scene.getObjectByName('school'));
@@ -256,7 +250,7 @@ class Drawer {
       });
     });
 
-    // Super buildings
+    // Buildings
     this.buildings = Building.extract(buildings);
     for (let i = 0; i < this.buildings.length; i++) {
       this.buildings[i] = this.buildings[i].toGroup();
@@ -332,7 +326,7 @@ function threejsStart () {
   render();
 }
 
-/* Resize all HTML elements on the page function */
+/* Resize all required HTML elements on the page function */
 function resizeAll () {
   const canvas = document.getElementById('canvas');
   let canvasRect = canvas.getBoundingClientRect();
