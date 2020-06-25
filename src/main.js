@@ -14,9 +14,6 @@ import { OrbitControls } from 'three-orbitcontrols/OrbitControls.js';
 /* .GLTF model loader import */
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
-/* Import dat.gui library */
-import dat from 'dat.gui';
-
 /* Import basement shaders text */
 import vShader from './base.vert';
 import fShader from './base.frag';
@@ -76,8 +73,7 @@ class Building {
     this.geom = new THREE.CubeGeometry(Math.abs(x1 - x0) - 0.2, h - 0.2, Math.abs(y1 - y0) - 0.2);
     this.geom.translate((x0 + x1) / 2, h / 2, (y0 + y1) / 2);
 
-    const points = [];
-    points.push(
+    const points = [
       new THREE.Vector3(x0, 0, y0),
       new THREE.Vector3(x0, 0, y1),
       new THREE.Vector3(x0, 0, y1),
@@ -85,9 +81,7 @@ class Building {
       new THREE.Vector3(x1, 0, y1),
       new THREE.Vector3(x1, 0, y0),
       new THREE.Vector3(x1, 0, y0),
-      new THREE.Vector3(x0, 0, y0)
-    );
-    points.push(
+      new THREE.Vector3(x0, 0, y0),
       new THREE.Vector3(x0, 0, y0),
       new THREE.Vector3(x0, h, y0),
       new THREE.Vector3(x0, 0, y1),
@@ -95,9 +89,7 @@ class Building {
       new THREE.Vector3(x1, 0, y0),
       new THREE.Vector3(x1, h, y0),
       new THREE.Vector3(x1, 0, y1),
-      new THREE.Vector3(x1, h, y1)
-    );
-    points.push(
+      new THREE.Vector3(x1, h, y1),
       new THREE.Vector3(x0, h, y0),
       new THREE.Vector3(x0, h, y1),
       new THREE.Vector3(x0, h, y1),
@@ -106,7 +98,7 @@ class Building {
       new THREE.Vector3(x1, h, y0),
       new THREE.Vector3(x1, h, y0),
       new THREE.Vector3(x0, h, y0)
-    );
+    ];
 
     this.wire = new THREE.Geometry().setFromPoints(points);
   }
@@ -214,8 +206,6 @@ class Drawer {
     this.renderer.autoClearColor = false;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.renderer.setSize(canvas.width, canvas.height);
-
-    this.gui = new dat.GUI();
   }
 
   /* Initialize drawing context method */
@@ -286,43 +276,10 @@ class Drawer {
       this.buildings[i] = this.buildings[i].toGroup();
       this.scene.add(this.buildings[i]);
     }
-
-    // dat.GUI fields
-    this.gui.add(buildParams, 'near', 0, 700).step(10);
-    this.gui.add(buildParams, 'far', 0, 1000).step(10);
-    this.gui.add(buildParams, 'pow', 0, 5).step(0.1);
-    this.gui.addColor(buildParams, 'color');
-    this.gui.addColor(buildParams, 'wireColor');
-    this.gui.add(buildParams, 'opacity', 0, 1).step(0.01);
   }
 
   /* Render method */
   render () {
-    this.scene.traverse((child) => {
-      if ((child instanceof THREE.Mesh || child instanceof THREE.LineSegments) &&
-          child.material.type === 'ShaderMaterial') {
-        child.material.uniforms.fadeNear.value = buildParams.near;
-        child.material.uniforms.fadeFar.value = buildParams.far;
-        child.material.uniforms.fadeParam.value = buildParams.pow;
-
-        if (child.name !== 'wire') {
-          child.material.uniforms.color = new THREE.Uniform(new THREE.Vector3(
-            ((buildParams.color & 0xff0000) >> 16) / 255,
-            ((buildParams.color & 0x00ff00) >> 8) / 255,
-            (buildParams.color & 0x0000ff) / 255
-          ));
-        } else {
-          child.material.uniforms.color = new THREE.Uniform(new THREE.Vector3(
-            ((buildParams.wireColor & 0xff0000) >> 16) / 255,
-            ((buildParams.wireColor & 0x00ff00) >> 8) / 255,
-            (buildParams.wireColor & 0x0000ff) / 255
-          ));
-        }
-        child.material.uniforms.opacity.value = buildParams.opacity;
-        child.material.needsUpdate = true;
-      }
-    });
-
     this.controls.update();
     this.bgMesh.position.copy(this.camera.position);
 
