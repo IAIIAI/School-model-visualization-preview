@@ -73,8 +73,8 @@ const buildParams = {
 /* Building representation class */
 class Building {
   constructor (x0, y0, x1, y1, h) {
-    this.geom = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
-    this.geom.translate((x0 + x1) / 2, h / 2 + 1, (y0 + y1) / 2);
+    this.geom = new THREE.CubeGeometry(Math.abs(x1 - x0) - 0.2, h - 0.2, Math.abs(y1 - y0) - 0.2);
+    this.geom.translate((x0 + x1) / 2, h / 2, (y0 + y1) / 2);
 
     const points = [];
     points.push(
