@@ -24,13 +24,49 @@ import fShader from './base.frag';
 /* Buildings metadata file import */
 import buildings from '../bin/buildings.json';
 
+/* Loading manager for resources and its functions */
+const manager = new THREE.LoadingManager();
+manager.onStart = function () {
+  const barContainer = document.createElement('div');
+  barContainer.style.cssText = `
+    text-align: center;
+    width: 200px;
+    background-color: black;
+    border-radius: 13px;
+    padding: 3px;
+  `;
+  barContainer.id = 'progressContainer';
+  barContainer.innerHTML = '<p style="color: white; margin: none"> Loading resources... </p>';
+  const barProgress = document.createElement('div');
+  barProgress.style.cssText = `
+    background-color: blue;
+    border-radius: 10px;
+  `;
+  barProgress.style.width = '10%';
+  barProgress.style.height = '25%';
+  barProgress.id = 'progress';
+  barContainer.appendChild(barProgress);
+  document.getElementById('main').appendChild(barContainer);
+
+  document.getElementById('canvas').style.cursor = 'wait';
+};
+manager.onProgress = function (item, loaded, total) {
+  document.getElementById('progress').style.width = `${loaded / total * 100}%`;
+};
+manager.onLoad = function () {
+  const bar = document.getElementById('progressContainer');
+  bar.parentNode.removeChild(bar);
+
+  document.getElementById('canvas').style.cursor = 'grab';
+};
+
 /* Buildings global parameters */
 const buildParams = {
   near: 100,
   far: 600,
   pow: 2,
   color: 0x91fff2,
-  wireColor: 0x4030ff,
+  wireColor: 0x000000,
   opacity: 0.6
 };
 
@@ -40,8 +76,39 @@ class Building {
     this.geom = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
     this.geom.translate((x0 + x1) / 2, h / 2 + 1, (y0 + y1) / 2);
 
-    this.wire = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
-    this.wire.translate((x0 + x1) / 2, h / 2 + 1, (y0 + y1) / 2);
+    const points = [];
+    points.push(
+      new THREE.Vector3(x0, 0, y0),
+      new THREE.Vector3(x0, 0, y1),
+      new THREE.Vector3(x0, 0, y1),
+      new THREE.Vector3(x1, 0, y1),
+      new THREE.Vector3(x1, 0, y1),
+      new THREE.Vector3(x1, 0, y0),
+      new THREE.Vector3(x1, 0, y0),
+      new THREE.Vector3(x0, 0, y0)
+    );
+    points.push(
+      new THREE.Vector3(x0, 0, y0),
+      new THREE.Vector3(x0, h, y0),
+      new THREE.Vector3(x0, 0, y1),
+      new THREE.Vector3(x0, h, y1),
+      new THREE.Vector3(x1, 0, y0),
+      new THREE.Vector3(x1, h, y0),
+      new THREE.Vector3(x1, 0, y1),
+      new THREE.Vector3(x1, h, y1)
+    );
+    points.push(
+      new THREE.Vector3(x0, h, y0),
+      new THREE.Vector3(x0, h, y1),
+      new THREE.Vector3(x0, h, y1),
+      new THREE.Vector3(x1, h, y1),
+      new THREE.Vector3(x1, h, y1),
+      new THREE.Vector3(x1, h, y0),
+      new THREE.Vector3(x1, h, y0),
+      new THREE.Vector3(x0, h, y0)
+    );
+
+    this.wire = new THREE.Geometry().setFromPoints(points);
   }
 
   /* Extract buildings from string method */
@@ -93,54 +160,17 @@ class Building {
       vertexShader: vShader,
       fragmentShader: fShader,
       blending: THREE.NormalBlending,
-      transparent: true,
-      wireframe: true
+      transparent: true
     });
 
     const group = new THREE.Group();
     group.add(new THREE.Mesh(this.geom, material));
-    const wire = new THREE.Mesh(this.wire, wireMaterial);
+    const wire = new THREE.LineSegments(this.wire, wireMaterial);
     wire.name = 'wire';
     group.add(wire);
     return group;
   }
 }
-
-/* Loading manager for resources and its functions */
-const manager = new THREE.LoadingManager();
-manager.onStart = function () {
-  const barContainer = document.createElement('div');
-  barContainer.style.cssText = `
-    text-align: center;
-    width: 200px;
-    background-color: black;
-    border-radius: 13px;
-    padding: 3px;
-  `;
-  barContainer.id = 'progressContainer';
-  barContainer.innerHTML = '<p style="color: white; margin: none"> Loading resources... </p>';
-  const barProgress = document.createElement('div');
-  barProgress.style.cssText = `
-    background-color: blue;
-    border-radius: 10px;
-  `;
-  barProgress.style.width = '10%';
-  barProgress.style.height = '25%';
-  barProgress.id = 'progress';
-  barContainer.appendChild(barProgress);
-  document.getElementById('main').appendChild(barContainer);
-
-  document.getElementById('canvas').style.cursor = 'wait';
-};
-manager.onProgress = function (item, loaded, total) {
-  document.getElementById('progress').style.width = `${loaded / total * 100}%`;
-};
-manager.onLoad = function () {
-  const bar = document.getElementById('progressContainer');
-  bar.parentNode.removeChild(bar);
-
-  document.getElementById('canvas').style.cursor = 'grab';
-};
 
 /* Main drawing context representation class */
 class Drawer {
@@ -269,7 +299,7 @@ class Drawer {
   /* Render method */
   render () {
     this.scene.traverse((child) => {
-      if (child instanceof THREE.Mesh &&
+      if ((child instanceof THREE.Mesh || child instanceof THREE.LineSegments) &&
           child.material.type === 'ShaderMaterial') {
         child.material.uniforms.fadeNear.value = buildParams.near;
         child.material.uniforms.fadeFar.value = buildParams.far;
