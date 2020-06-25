@@ -167,7 +167,7 @@ class Drawer {
     this.bgScene.add(this.bgMesh);
 
     this.camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 3000);
-    this.camera.position.set(470, 180, 470);
+    this.camera.position.set(430, 270, 430);
 
     this.controls = new THREE.OrbitControls(this.camera, canvas);
     this.controls.enableKeys = false;
