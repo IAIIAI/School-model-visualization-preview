@@ -26,22 +26,22 @@ import buildings from '../bin/buildings.json';
 
 /* Buildings global parameters */
 const buildParams = {
-  near: 200,
-  far: 515,
-  pow: 1,
-  color: 0x00dddd,
-  wireColor: 0x003333,
-  opacity: 0.5
+  near: 100,
+  far: 600,
+  pow: 2,
+  color: 0x91fff2,
+  wireColor: 0x4030ff,
+  opacity: 0.6
 };
 
 /* Building representation class */
 class Building {
   constructor (x0, y0, x1, y1, h) {
     this.geom = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
-    this.geom.translate(x0, h / 2 + 1, y0);
+    this.geom.translate((x0 + x1) / 2, h / 2 + 1, (y0 + y1) / 2);
 
     this.wire = new THREE.CubeGeometry(Math.abs(x1 - x0), h, Math.abs(y1 - y0));
-    this.wire.translate(x0, h / 2 + 1, y0);
+    this.wire.translate((x0 + x1) / 2, h / 2 + 1, (y0 + y1) / 2);
   }
 
   /* Extract buildings from string method */
@@ -162,18 +162,18 @@ class Drawer {
       side: THREE.BackSide
     });
     material.uniforms.tEquirect.value = texture;
-    const plane = new THREE.BoxBufferGeometry(2, 2, 2);
+    const plane = new THREE.BoxBufferGeometry(3, 3, 3);
     this.bgMesh = new THREE.Mesh(plane, material);
     this.bgScene.add(this.bgMesh);
 
-    this.camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 3000);
-    this.camera.position.set(470, 180, 180);
+    this.camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 1, 3000);
+    this.camera.position.set(470, 180, 470);
 
     this.controls = new THREE.OrbitControls(this.camera, canvas);
     this.controls.enableKeys = false;
     this.controls.maxPolarAngle = Math.PI / 2 - 0.05;
     this.controls.minDistance = 200;
-    this.controls.maxDistance = 800;
+    /// this.controls.maxDistance = 800;
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.1;
 
@@ -189,6 +189,9 @@ class Drawer {
 
   /* Initialize drawing context method */
   init () {
+    // Axes (debug)
+    this.scene.add(new THREE.AxesHelper(500, 500, 500));
+
     // Lights
     const ambLight = new THREE.AmbientLight(0xffffff, 0.3);
     this.scene.add(ambLight);
@@ -228,7 +231,8 @@ class Drawer {
         const root = gltf.scene;
         root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
         root.rotateY(-Math.PI / 2);
-        root.position.add(new THREE.Vector3(0, 0, -7));
+        root.position.add(new THREE.Vector3(1, 0, -7));
+        root.scale.set(1.07, 1.07, 1.07);
         school = root;
         school.name = 'school';
         this.scene.add(school);
@@ -242,7 +246,8 @@ class Drawer {
           const root = gltf.scene;
           root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xcdcdcd });
           root.rotateY(-Math.PI / 2);
-          root.position.add(new THREE.Vector3(4, 16, 39));
+          root.position.add(new THREE.Vector3(-1, 15, 39));
+          root.scale.set(1.05, 1.05, 1.05);
           school = root;
           this.scene.remove(this.scene.getObjectByName('school'));
           this.scene.add(school);
@@ -354,7 +359,7 @@ function resizeAll () {
     const barRect = progressBar.getBoundingClientRect();
     progressBar.style.position = 'absolute';
     progressBar.style.left = `${canvasRect.left + canvasRect.width / 2 - barRect.width / 2}px`;
-    progressBar.style.top = `${canvasRect.top + canvasRect.height * 2 / 3 - barRect.height / 2}px`;
+    progressBar.style.top = `${canvasRect.top + canvasRect.height * 3 / 4 - barRect.height / 2}px`;
   }
 }
 
