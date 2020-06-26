@@ -210,9 +210,16 @@ class Drawer {
 
   /* Initialize drawing context method */
   init () {
-    // Light
-    const ambLight = new THREE.AmbientLight(0xffffff, 1);
+    // Lights
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(ambLight);
+
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
+    dirLight1.position.set(700, 800, 0);
+    this.scene.add(dirLight1);
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    dirLight2.position.set(0, 800, 700);
+    this.scene.add(dirLight2);
 
     // Plane
     const loader = new THREE.TextureLoader(manager);
@@ -243,7 +250,7 @@ class Drawer {
       const gltfLoader = new GLTFLoader(manager);
       gltfLoader.load('./bin/school/low.glb', (gltf) => {
         const root = gltf.scene;
-        root.children[0].material = new THREE.MeshBasicMaterial();
+        root.children[0].material = new THREE.MeshPhongMaterial({ color: 0x888888 });
         root.rotateY(-Math.PI / 2);
         root.position.add(new THREE.Vector3(1, 0, -7));
         root.scale.set(1.07, 1.07, 1.07);
@@ -258,9 +265,9 @@ class Drawer {
       return new Promise((resolve, reject) => {
         gltfLoader.load('./bin/school/high.glb', (gltf) => {
           const root = gltf.scene;
-          root.children[0].material = new THREE.MeshBasicMaterial();
+          root.children[0].material = new THREE.MeshPhongMaterial({ color: 0xffffff });
           root.rotateY(-Math.PI / 2);
-          root.position.add(new THREE.Vector3(-45, 1, -14));
+          root.position.add(new THREE.Vector3(-45, -53, -14));
           root.scale.set(1.05, 1.05, 1.05);
           school = root;
           this.scene.remove(this.scene.getObjectByName('school'));
